@@ -1,0 +1,28 @@
+Song lab report
+
+Lab - 01: Reccomending songs 
+
+Rowan Rosenblum 
+
+Each song is a vector of 800 word counts, and I tested whether similarity between the vectors reccomends songs of the same genre, and then tried to build a better system.
+
+For each of the 560 top 40 songs, I removed the song itself and every song by the same artist, and then took the top 3 matches, and counted a ‘hit’ when the match presented the same genre. The score is precision@3, or the share of all recommendations that were hits. With 14 genres, picking randomly would scorea around 0.0.
+
+Baselines via precision@3:
+raw inner product -> 0.093
+cosine similarity -> 0.191
+TF-IDF cosine -> 0.210
+
+The baselines rank this way because: the raw inner product almost never beats random, for it rewards total word count, and thus a handful of very long sons (such as ‘Interlude 5’) get recommended for nearly every query. Cosine similarity ignores the length and the resulting score doubles, and then TF-IDF places less weight on words that appear in many songs (“you”, “and”) and puts more weight on rarer words. 
+
+The system I added: since TF-IDF uses log(1 + count), words repeated 40 times would still count the same as words repeated 5 times, and songs that repeat a word in their chorus would get matched on that word. Thus, I replaced log(1 + count) with the term-frequency weight from Okapi BM25: (k+1) * count / (count + k), k=1.2, which flatterns out after some uses. Thus, a match noew depends on which rarer words two songs share. This results in: saturated TF-IDF cosine: 0.236.
+
+Things tried that did not make it through: blending query withits nearest neighbors, dropping the most common words, using word presence instead of counts, and squared IDF.
+
+Sources: https://en.wikipedia.org/wiki/Okapi_BM25
+
+https://www.staff.city.ac.uk/~sbrp622/papers/foundations_bm25_review.pdf
+
+
+Conclusion:
+Cosine and TF-IDF cosine are far better than the raw inner product, and capping word weights improves on them more. All scores are still relatively low as lyrics seem to be a week genre indicator. Indeed, genres like rock, pop, country, etc are very likely to use the same words, and the 800 vocab list drops many content words. A better system for this task would likely combine audio features, tags, and/or listening behavior among other music-related data.
